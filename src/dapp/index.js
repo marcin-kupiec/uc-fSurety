@@ -35,6 +35,11 @@ import './flightsurety.css';
       airlineSelect.add(DOM.makeElement("option", { innerText: key }));
     }
 
+    let flightSelect = DOM.elid("flight-select");
+    for (let i = 0; i < contract.flights.length; i++) {
+      flightSelect.add(DOM.makeElement("option", { innerText: contract.flights[i] }));
+    }
+
     // admin panel functions
 
     DOM.elid('btn-refresh-status').addEventListener('click', async () => {
@@ -98,9 +103,9 @@ import './flightsurety.css';
       let airlineName = DOM.elid('airline').value;
       let airlineAddress = contract.airlines[airlineName];
 
-      let result, err;
+      let err;
       try {
-        result = await contract.registerAirline(airlineAddress, airlineName);
+        await contract.registerAirline(airlineAddress, airlineName);
       } catch (error) {
         console.log(`registerAirline name ${airlineName} address ${airlineAddress} error: `, error);
         err = error;
@@ -109,7 +114,7 @@ import './flightsurety.css';
       display('airline-messages', '', '', [{
         label: 'Airline registration',
         error: err,
-        value: result,
+        value: `Registered airline ${airlineName} by ${contract.activeAccount}`,
       }]);
 
       await refreshAccountInfo();
@@ -118,9 +123,9 @@ import './flightsurety.css';
     DOM.elid('btn-airline-fund').addEventListener('click', async () => {
       let value = DOM.elid('fund-amount').value;
 
-      let result, err;
+      let err;
       try {
-        result = await contract.fundAirline(value);
+        await contract.fundAirline(value);
       } catch (error) {
         console.log(`fundAirline value ${value} error: `, error);
         err = error;
@@ -129,10 +134,38 @@ import './flightsurety.css';
       display('airline-messages', '', '', [{
         label: 'Airline funding',
         error: err,
-        value: result,
+        value: `Funded airline ${contract.getAirlineNameByAccount(contract.activeAccount)} with ${value} ethers`,
       }]);
 
       await refreshAccountInfo();
+    })
+
+    // flights panel
+
+    DOM.elid('btn-flights-register').addEventListener('click', async () => {
+      let flightId = DOM.elid('flight-select').value;
+
+      let result, err;
+      try {
+        result = await contract.registerFlight(flightId);
+      } catch (error) {
+        console.log(`registerFlight flightId ${flightId} error: `, error);
+        err = error;
+      }
+
+      display('flight-messages', '', '', [{
+        label: 'Flight registration',
+        error: err,
+        value: `Registered flight ${result[0]} by airline ${contract.getAirlineNameByAccount(result[1])} at ${result[2]}`,
+      }]);
+
+      // let flightSelect = DOM.elid("registered-flight-select");
+      // for (let i = flightSelect.options.length - 1; i >= 0; i--) {
+      //   flightSelect.remove(i);
+      // }
+      // for (let i = 0; i < contract.flights.length; i++) {
+      //   flightSelect.add(DOM.makeElement("option", { innerText: contract.flights[i] }));
+      // }
     })
 
     // User-submitted transaction

@@ -9,6 +9,8 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    uint256 public constant MINIMUM_FUNDS = 1 ether;
+
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
 
@@ -26,7 +28,15 @@ contract FlightSuretyData {
     mapping(address => Airline) private airlines;      // Mapping for storing airlines
     uint256 public airlinesCount;
 
-    uint256 public constant MINIMUM_FUNDS = 1 ether;
+    // flights info
+    struct Flight {
+        bool isRegistered;
+        string flightCode;
+        uint256 timestamp;
+        address airline;
+    }
+
+    mapping(bytes32 => Flight) private flights;
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -167,6 +177,7 @@ contract FlightSuretyData {
 
     function voteForAirline(address newAirline, uint threshold) public
     requireIsOperational
+    requireIsCallerAuthorized
     {
         airlines[newAirline].votes++;
 
@@ -176,14 +187,39 @@ contract FlightSuretyData {
         }
     }
 
-    function airlineExists(address airline) external view returns (bool) {
+    function airlineExists(address airline) external view
+    requireIsCallerAuthorized
+    returns (bool) {
         return airlines[airline].exists;
     }
 
     function isAirlineFunded(address airline) public view
     requireIsOperational
+    requireIsCallerAuthorized
     returns (bool) {
         return (airlines[airline].funded >= MINIMUM_FUNDS);
+    }
+
+    function registerFlight(bytes32 key, string code, uint256 timestamp) external
+    requireIsOperational
+    requireIsCallerAuthorized
+    {
+        require(!flights[key].isRegistered, "Flight is already registered.");
+
+        flights[key] = Flight({
+        isRegistered : true,
+        flightCode : code,
+        timestamp : timestamp,
+        airline : msg.sender
+        });
+    }
+
+    function isFlightRegistered(bytes32 key) public view
+    requireIsOperational
+    requireIsCallerAuthorized
+    returns (bool)
+    {
+        return flights[key].isRegistered;
     }
 
     /**

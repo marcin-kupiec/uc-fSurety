@@ -27,11 +27,6 @@
             <tr>
                 <td><label class="form">Operational:</label></td>
                 <td><label class="form" id="operational-status">Unknown</label></td>
-                <td>
-                    <div>
-                        <button class="btn btn-primary" id="btn-operational-toggle">Toggle Operational Status</button>
-                    </div>
-                </td>
             </tr>
             <tr>
                 <td>
@@ -93,6 +88,11 @@
                 <td>
                     <div>
                         <button class="btn btn-primary" id="btn-refresh-status">Refresh Status</button>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <button class="btn btn-primary" id="btn-operational-toggle">Toggle Operational Status</button>
                     </div>
                 </td>
             </tr>
@@ -158,13 +158,43 @@
     <div id="airline-messages" class="top-20 container-centered"></div>
 </main>
 
+<main id="flights" class="container">
+    <label class="h1">Flights</label>
+    <div>
+        The application is pre-populated with a list of available flight, but they are not
+        registered flights.
+    </div>
+    <div>
+        Whatever airline is associated with the currently active account will
+        register the flight using the current timestamp.
+    </div>
+    <div>
+        Each registered flight will be added to list in the Insurance panel for
+        passengers to insure available flights.
+    </div>
+    <div class='row top-20 container-centered'>
+        <table>
+            <tr>
+                <td><label class="form">Select Flight</label></td>
+                <td><select id="flight-select" title="select an available flight"></select></td>
+                <td>
+                    <div>
+                        <button class="btn btn-primary" id="btn-flights-register">Register</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="flight-messages" class="top-20 container-centered"></div>
+</main>
+
 <main class="container">
 
     <div id="display-wrapper" class="top-20">
     </div>
     <div class="row top-20">
         <label class="form">Flight</label> <input type="text" id="flight-number">
-        <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+        <button class="btn btn-primary" id="submit-oracle">Submit to Oracles</button>
     </div>
 </main>
 

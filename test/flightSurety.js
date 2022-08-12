@@ -116,4 +116,30 @@ contract('Flight Surety Tests', async (accounts) => {
     airlinesCount = await config.flightSuretyData.airlinesCount.call();
     assert.equal(airlinesCount, 5, `Airlines count should be 5: expected 5 got ${airlinesCount}`);
   });
+
+  it('(flight) can register a flight using registerFlight()', async () => {
+    let flightTimestamp = Math.floor(Date.now() / 1000);
+    let flightCode = 'CODE1';
+
+    await config.flightSuretyApp.registerFlight(flightCode, flightTimestamp, { from: config.firstAirline });
+
+    let isRegistered = await config.flightSuretyApp.isFlightRegistered.call(flightCode, flightTimestamp, config.firstAirline);
+    assert.equal(isRegistered, true, 'Flight should be registered');
+  });
+
+  it('(flight) cannot register same flight twice', async () => {
+    let flightTimestamp = Math.floor(Date.now() / 1000);
+    let flightCode = 'CODE1';
+
+    let reverted = false;
+    try {
+      await config.flightSuretyApp.registerFlight(flightCode, flightTimestamp, { from: config.firstAirline });
+    } catch {
+      reverted = true;
+    }
+
+    let isRegistered = await config.flightSuretyApp.isFlightRegistered.call(flightCode, flightTimestamp, config.firstAirline);
+    assert.equal(isRegistered, true, 'Flight should be registered');
+    assert.equal(reverted, true);
+  });
 });

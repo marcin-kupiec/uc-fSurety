@@ -41,7 +41,7 @@ contract FlightSuretyApp {
     uint private constant premiumMultiplier = 2;
     uint8 private constant MULTIPARTY_MIN_AIRLINES = 4;
     uint8 private constant CONSENSUS_MAJORITY = 2;
-    
+
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -153,13 +153,19 @@ contract FlightSuretyApp {
      * @dev Register a future flight for insuring.
     *
     */
-    function registerFlight
-    (
-    )
-    external
-    pure
+    function registerFlight(string code, uint256 timestamp) external
+    requireAirlineFunded
+    requireAirlineRegistered
     {
+        bytes32 key = getFlightKey(msg.sender, code, timestamp);
+        flightSuretyData.registerFlight(key, code, timestamp);
+    }
 
+    function isFlightRegistered(string code, uint256 timestamp, address airline) external view
+    returns (bool)
+    {
+        bytes32 key = getFlightKey(airline, code, timestamp);
+        return flightSuretyData.isFlightRegistered(key);
     }
 
     /**

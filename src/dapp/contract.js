@@ -38,6 +38,25 @@ export default class Contract {
       this.airlines['KLM'] = accts[5];
       this.airlines['EnterAir'] = accts[6];
 
+      this.flightsRegistered = {};
+      this.flights = [
+        'LAI-ABE',
+        'DHA-LCY',
+        'LCY-DHA',
+        'ABE-LAI',
+        'BRU-BER',
+        'BER-BRU',
+        'SFO-JFK',
+        'FKS-HKG',
+        'BER-HKG',
+        'YWG-YYC',
+        'JFK-SFO',
+        'CPT-CRK',
+        'LAI-HGK',
+        'CRK-CPT',
+        'HKG-BER',
+      ];
+
       this.authorizeAppToData()
         .then(() => callback())
         .catch(err => {
@@ -45,6 +64,10 @@ export default class Contract {
           console.log(err);
         });
     });
+  }
+
+  getAirlineNameByAccount(address) {
+    return Object.entries(this.airlines).filter(([k, v]) => v === address)[0][0];
   }
 
   isOperational() {
@@ -80,6 +103,20 @@ export default class Contract {
 
   isAirlineFunded() {
     return this.flightSuretyApp.methods.isAirlineFunded(this.activeAccount).call({ from: this.activeAccount });
+  }
+
+  async registerFlight(flightCode) {
+    let timestamp = Math.floor(Date.now() / 1000);
+    let airline = this.activeAccount;
+
+    await this.flightSuretyApp.methods.registerFlight(flightCode, timestamp).send({
+      from: this.activeAccount,
+      gas: this.networkConfig.gas,
+      gasPrice: this.networkConfig.gasPrice,
+    });
+    this.flightsRegistered[flightCode] = [flightCode, airline, timestamp];
+
+    return [flightCode, airline, timestamp];
   }
 
   fetchFlightStatus(flight, callback) {
