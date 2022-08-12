@@ -38,7 +38,10 @@ contract FlightSuretyApp {
 
     mapping(bytes32 => Flight) private flights;
 
-
+    uint private constant premiumMultiplier = 2;
+    uint8 private constant MULTIPARTY_MIN_AIRLINES = 4;
+    uint8 private constant CONSENSUS_MAJORITY = 2;
+    
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -112,13 +115,19 @@ contract FlightSuretyApp {
     */
     function registerAirline(address newAirlineAddress, string name) external
     requireAirlineFunded
-    returns (bool success, uint256 votes)
+    requireAirlineRegistered
     {
-        require(!isAirlineRegistered(newAirlineAddress), "Airline is already registered.");
+        if (flightSuretyData.airlinesCount() < MULTIPARTY_MIN_AIRLINES) {
+            flightSuretyData.registerAirline(newAirlineAddress, name, true, 0);
+            return;
+        }
 
-        flightSuretyData.registerAirline(newAirlineAddress, name, true, 0);
+        if (!flightSuretyData.airlineExists(newAirlineAddress)) {
+            flightSuretyData.registerAirline(newAirlineAddress, name, false, 0);
+        }
 
-        return (success, 0);
+        uint threshold = flightSuretyData.airlinesCount().div(CONSENSUS_MAJORITY);
+        flightSuretyData.voteForAirline(newAirlineAddress, threshold);
     }
 
     function isAirlineRegistered(address airline) public view returns (bool)

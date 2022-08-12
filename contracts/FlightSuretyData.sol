@@ -165,6 +165,21 @@ contract FlightSuretyData {
         }
     }
 
+    function voteForAirline(address newAirline, uint threshold) public
+    requireIsOperational
+    {
+        airlines[newAirline].votes++;
+
+        if (airlines[newAirline].votes >= threshold) {
+            airlines[newAirline].isRegistered = true;
+            airlinesCount++;
+        }
+    }
+
+    function airlineExists(address airline) external view returns (bool) {
+        return airlines[airline].exists;
+    }
+
     function isAirlineFunded(address airline) public view
     requireIsOperational
     returns (bool) {

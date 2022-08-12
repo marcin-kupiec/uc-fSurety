@@ -14,6 +14,8 @@ module.exports = function (deployer) {
               url: 'http://localhost:9545',
               dataAddress: FlightSuretyData.address,
               appAddress: FlightSuretyApp.address,
+              gas: 4712388,
+              gasPrice: 100000000000,
             },
           }
           fs.writeFileSync(__dirname + '/../src/dapp/config.json', JSON.stringify(config, null, '\t'), 'utf-8');

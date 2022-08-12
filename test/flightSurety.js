@@ -88,4 +88,32 @@ contract('Flight Surety Tests', async (accounts) => {
     // ASSERT
     assert.equal(result, true, "Airline should not be able to register another airline if it hasn't provided funding");
   });
+
+  it('(airline) register other airline using consensus', async () => {
+    try {
+      await config.flightSuretyApp.registerAirline(accounts[3], 'Udacity Airline 3', { from: config.firstAirline });
+      await config.flightSuretyApp.registerAirline(accounts[4], 'Udacity Airline 4', { from: config.firstAirline });
+      await config.flightSuretyApp.registerAirline(accounts[5], 'Udacity Airline 5', { from: config.firstAirline });
+    } catch (e) {
+      console.log(e);
+    }
+
+    let isRegistered = await config.flightSuretyApp.isAirlineRegistered.call(accounts[5]);
+    assert.equal(isRegistered, false, 'Airline should wait to get votes');
+
+    let airlinesCount = await config.flightSuretyData.airlinesCount.call();
+    assert.equal(airlinesCount, 4, `Airlines count should be 4 - one waiting for votes: expected 4 got ${airlinesCount}`);
+
+    // fund another airline
+    const funds = await config.flightSuretyData.MINIMUM_FUNDS.call();
+    await config.flightSuretyApp.fundAirline({ from: accounts[3], value: funds });
+    // register same airline using another airline
+    await config.flightSuretyApp.registerAirline(accounts[5], 'Udacity Airline 5', { from: accounts[3] });
+
+    isRegistered = await config.flightSuretyApp.isAirlineRegistered.call(accounts[5]);
+    assert.equal(isRegistered, true, 'Airline should be registered');
+
+    airlinesCount = await config.flightSuretyData.airlinesCount.call();
+    assert.equal(airlinesCount, 5, `Airlines count should be 5: expected 5 got ${airlinesCount}`);
+  });
 });

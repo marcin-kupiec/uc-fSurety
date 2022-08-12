@@ -18,7 +18,7 @@ import './flightsurety.css';
       status.innerText = result;
     } catch (err) {
       console.log('Failed to check operational status', err);
-      display('Operational Status', 'Check if contract is operational', [{
+      display(null, 'Operational Status', 'Check if contract is operational', [{
         label: 'Operational Status',
         error: err,
         value: result,
@@ -36,15 +36,6 @@ import './flightsurety.css';
     }
 
     // admin panel functions
-
-    DOM.elid('btn-operational-status').addEventListener('click', async () => {
-      try {
-        let status = DOM.elid('operational-status');
-        status.innerText = await contract.isOperational();
-      } catch (err) {
-        console.log('isOperational error: ', err);
-      }
-    });
 
     DOM.elid('btn-refresh-status').addEventListener('click', async () => {
       await refreshAccountInfo();
@@ -107,14 +98,19 @@ import './flightsurety.css';
       let airlineName = DOM.elid('airline').value;
       let airlineAddress = contract.airlines[airlineName];
 
-      console.log(airlineName, airlineAddress);
+      let result, err;
       try {
-        let result = await contract.registerAirline(airlineAddress, airlineName);
-        displayAirlineMessage('Register:', null, result);
-      } catch (err) {
-        console.log(`registerAirline name ${airlineName} address ${airlineAddress} error: `, err);
-        displayAirlineMessage('Register:', err);
+        result = await contract.registerAirline(airlineAddress, airlineName);
+      } catch (error) {
+        console.log(`registerAirline name ${airlineName} address ${airlineAddress} error: `, error);
+        err = error;
       }
+
+      display('airline-messages', '', '', [{
+        label: 'Airline registration',
+        error: err,
+        value: result,
+      }]);
 
       await refreshAccountInfo();
     })
@@ -122,13 +118,19 @@ import './flightsurety.css';
     DOM.elid('btn-airline-fund').addEventListener('click', async () => {
       let value = DOM.elid('fund-amount').value;
 
+      let result, err;
       try {
-        await contract.fundAirline(value);
-        displayAirlineMessage('Fund:', null, result);
-      } catch (err) {
-        console.log(`fundAirline value ${value} error: `, err);
-        displayAirlineMessage('Fund:', err);
+        result = await contract.fundAirline(value);
+      } catch (error) {
+        console.log(`fundAirline value ${value} error: `, error);
+        err = error;
       }
+
+      display('airline-messages', '', '', [{
+        label: 'Airline funding',
+        error: err,
+        value: result,
+      }]);
 
       await refreshAccountInfo();
     })
@@ -138,7 +140,7 @@ import './flightsurety.css';
       let flight = DOM.elid('flight-number').value;
       // Write transaction
       contract.fetchFlightStatus(flight, (error, result) => {
-        display('Oracles', 'Trigger oracles', [{
+        display(null, 'Oracles', 'Trigger oracles', [{
           label: 'Fetch Flight Status',
           error: error,
           value: result.flight + ' ' + result.timestamp,
@@ -150,8 +152,9 @@ import './flightsurety.css';
 })();
 
 
-function display(title, description, results) {
-  let displayDiv = DOM.elid('display-wrapper');
+function display(container, title, description, results) {
+  container = !!container ? container : 'display-wrapper';
+  let displayDiv = DOM.elid(container);
   let section = DOM.section();
   section.appendChild(DOM.h2(title));
   section.appendChild(DOM.h5(description));
@@ -162,20 +165,4 @@ function display(title, description, results) {
     section.appendChild(row);
   })
   displayDiv.append(section);
-}
-
-function displayAirlineMessage(label, error, result) {
-  let displayDiv = DOM.elid("airline-messages");
-  let section = DOM.section();
-  let row = section.appendChild(DOM.div({ className: 'row' }));
-  row.appendChild(DOM.div({ className: 'col-sm-1 field' }, label));
-  if (error) {
-    console.log('isAirlineRegistered error: ' + error);
-  }
-  row.appendChild(DOM.div({ className: 'col-sm-8 field-value' }, String(result)));
-  section.appendChild(row);
-  displayDiv.append(section);
-  if (displayDiv.childElementCount > 3) {
-    displayDiv.removeChild(displayDiv.firstChild);
-  }
 }
