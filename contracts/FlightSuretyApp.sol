@@ -134,6 +134,12 @@ contract FlightSuretyApp {
         flightSuretyData.fund.value(msg.value)(msg.sender);
     }
 
+    function isAirlineFunded(address airline) public view returns (bool)
+    {
+        require(airline != address(0), "'account' must be a valid address.");
+        return flightSuretyData.isAirlineFunded(airline);
+    }
+
     /**
      * @dev Register a future flight for insuring.
     *

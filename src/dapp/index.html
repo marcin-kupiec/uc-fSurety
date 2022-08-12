@@ -11,22 +11,177 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <a class="navbar-brand" href="#">FlightSurety</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="#">FlightSurety</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault"
             aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </nav>
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</nav>
 
-    <main class="container">
+<main id="admin" class="container">
+    <label class="h1">Admin Panel</label>
+    <div>
+        The contract will read the available accounts from Ganache (or another web3 provider in contract.js).
+    </div>
+    <div>
+        You can set what address you're interacting with the dapp from using the drop down below.
+    </div>
+    <div>
+        This allows you to test features of the dapp from various address perspectives.
+    </div>
+    <div class="row top-20">
+        <table>
+            <tr>
+                <td><label class="form">Operational:</label></td>
+                <td><label class="form" id="operational-status">Unknown</label></td>
+                <td>
+                    <div>
+                        <button class="btn btn-primary" id="btn-operational-toggle">Toggle Operational Status</button>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <button class="btn btn-primary" id="btn-operational-status" hidden=true>Refresh Operational
+                            Status
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Select:</label></div>
+                </td>
+                <td>
+                    <div><select id="available-accounts" title="select an active account for operations"></select></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Account:</label></div>
+                </td>
+                <td>
+                    <div><label class="form" id=acc-address>unknown</label></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Registered:</label></div>
+                </td>
+                <td>
+                    <div><label class="form" id=acc-registered>unknown</label></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Funded:</label></div>
+                </td>
+                <td>
+                    <div><label class="form" id=acc-funded>unknown</label></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Credit:</label></div>
+                </td>
+                <td>
+                    <div><label class="form" id=acc-credit>unknown</label></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Balance:</label></div>
+                </td>
+                <td>
+                    <div><label class="form" id=acc-balance>unknown</label></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div><label class="form">Contract Owner:</label></div>
+                </td>
+                <td>
+                    <div><label class="form" id=acc-owner>unknown</label></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div>
+                        <button class="btn btn-primary" id="btn-refresh-status">Refresh Status</button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="form" hidden="true">Oracles:</label></td>
+                <td><input type="text" id="oracle-count" value="25" hidden="true"></td>
+            </tr>
+            <tr>
+                <td>
+                    <div>
+                        <button class="btn btn-primary" id="btn-register-oracles" hidden="true">Register Oracles
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="admin-messages" class="top-20">
+    </div>
+</main>
 
-        <div id="display-wrapper" class="top-20">
-        </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-        </div>
-    </main>
+<main id="airlines" class="container">
+    <label class="h1">Airlines</label><br>
+    <div>
+        When the app starts only RyanAir is registered.
+    </div>
+    <div>
+        The registration of a new airline originates from the currently active account.
+        Select your active account from the admin panel.
+    </div>
+    <div>
+        Fund will also fund the airline associated with the currently active account,
+        not the one selected in the airline select dropdown.
+    </div>
+    <table>
+        <tr>
+            <td>
+                <div><select id="airline" title="select an available airline"></select></div>
+            </td>
+            <td>
+                <div>
+                    <button class="btn btn-primary" id="btn-airline-register"
+                            title="call originates from the currently active account">Register an Airline
+                    </button>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div><input type="text" id="fund-amount" title="amount to fund airline in ether"/></div>
+            </td>
+            <td>
+                <div>
+                    <button class="btn btn-primary" id="btn-airline-fund"
+                            title="funds the airline associated with the active account">Fund Your Airline
+                    </button>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div id="airline-messages" class="top-20">
+    </div>
+</main>
+
+<main class="container">
+
+    <div id="display-wrapper" class="top-20">
+    </div>
+    <div class="row top-20">
+        <label class="form">Flight</label> <input type="text" id="flight-number">
+        <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+    </div>
+</main>
 
 </body>
 

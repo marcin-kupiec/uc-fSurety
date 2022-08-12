@@ -14,24 +14,28 @@ export default class Contract {
 
     this.initialize(callback);
     this.owner = null;
-    this.airlines = [];
+    this.activeAccount = null;
+    this.availableAccounts = [];
+    this.airlines = {};
     this.passengers = [];
   }
 
   initialize(callback) {
     this.web3.eth.getAccounts((error, accts) => {
-
       this.owner = accts[0];
+      this.activeAccount = accts[0];
 
-      let counter = 1;
-
-      while (this.airlines.length < 5) {
-        this.airlines.push(accts[counter++]);
+      for (let i = 0; i < accts.length - 1; i++) {
+        this.availableAccounts.push(accts[i])
       }
 
-      while (this.passengers.length < 5) {
-        this.passengers.push(accts[counter++]);
-      }
+      this.airlines['RyanAir'] = accts[0];
+      this.airlines['WizzAir'] = accts[1];
+      this.airlines['LOT'] = accts[2];
+      this.airlines['Lufthansa'] = accts[3];
+      this.airlines['TurkishAir'] = accts[4];
+      this.airlines['KLM'] = accts[5];
+      this.airlines['EnterAir'] = accts[6];
 
       this.authorizeAppToData()
         .then(() => callback())
@@ -42,14 +46,35 @@ export default class Contract {
     });
   }
 
-  async isOperational() {
-    return this.flightSuretyApp.methods
-      .isOperational()
-      .call({ from: this.owner });
+  isOperational() {
+    return this.flightSuretyApp.methods.isOperational().call({ from: this.owner });
   }
 
-  async authorizeAppToData() {
+  authorizeAppToData() {
     return this.flightSuretyData.methods.authorizeCaller(this.appAddress).send({ from: this.owner });
+  }
+
+  toggleOperatingStatus(newStatus) {
+    return this.flightSuretyData.methods.setOperatingStatus(newStatus).send({ from: this.activeAccount });
+  }
+
+  registerAirline(address, name) {
+    return this.flightSuretyApp.methods.registerAirline(address, name).send({ from: this.activeAccount });
+  }
+
+  isAirlineRegistered(airline) {
+    return this.flightSuretyApp.methods.isAirlineRegistered(airline).call({ from: this.activeAccount });
+  }
+
+  fundAirline(value) {
+    return this.flightSuretyApp.methods.fundAirline().send({
+      from: this.activeAccount,
+      value: this.web3.utils.toWei(value, 'ether'),
+    });
+  }
+
+  isAirlineFunded() {
+    return this.flightSuretyApp.methods.isAirlineFunded(this.activeAccount).call({ from: this.activeAccount });
   }
 
   fetchFlightStatus(flight, callback) {
