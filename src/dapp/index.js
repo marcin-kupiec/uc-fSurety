@@ -156,16 +156,41 @@ import './flightsurety.css';
       display('flight-messages', '', '', [{
         label: 'Flight registration',
         error: err,
-        value: `Registered flight ${result[0]} by airline ${contract.getAirlineNameByAccount(result[1])} at ${result[2]}`,
+        value: `Registered flight ${result[0]} by airlineName ${contract.getAirlineNameByAccount(result[1])} airlineAddress ${result[1]} at ${result[2]}`,
       }]);
 
-      // let flightSelect = DOM.elid("registered-flight-select");
-      // for (let i = flightSelect.options.length - 1; i >= 0; i--) {
-      //   flightSelect.remove(i);
-      // }
-      // for (let i = 0; i < contract.flights.length; i++) {
-      //   flightSelect.add(DOM.makeElement("option", { innerText: contract.flights[i] }));
-      // }
+      let registeredFlightSelect = DOM.elid("registered-flight-select");
+      for (let i = Object.entries(contract.flightsRegistered).length - 1; i >= 0; i--) {
+        registeredFlightSelect.remove(i);
+      }
+
+      Object.entries(contract.flightsRegistered).forEach(([k, v]) => {
+        registeredFlightSelect.add(DOM.makeElement("option", { innerText: v }));
+      });
+    })
+
+    DOM.elid('btn-purchase-insurance').addEventListener('click', async () => {
+      let tuple = DOM.elid('registered-flight-select').value;
+      let res = tuple.split(',');
+      let flightCode = res[0];
+      let airlineAddress = res[1];
+      let timestamp = res[2];
+
+      let insuranceAmount = DOM.elid('insurance-amount').value;
+
+      let err;
+      try {
+        await contract.insureFlight(airlineAddress, flightCode, timestamp, insuranceAmount);
+      } catch (error) {
+        err = error;
+        console.log(`insureFlight flightCode ${flightCode} airlineAddress ${airlineAddress} timestamp ${timestamp} insuranceAmount ${insuranceAmount} error: `, error);
+      }
+
+      display('insurance-messages', '', '', [{
+        label: 'Flight insurance',
+        error: err,
+        value: `Bought flight insurance flightCode ${flightCode} airlineName ${contract.getAirlineNameByAccount(airlineAddress)} airlineAddress ${airlineAddress} timestamp ${timestamp} insuranceAmount ${insuranceAmount}`,
+      }]);
     })
 
     // User-submitted transaction

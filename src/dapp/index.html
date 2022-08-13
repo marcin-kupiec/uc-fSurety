@@ -188,15 +188,58 @@
     <div id="flight-messages" class="top-20 container-centered"></div>
 </main>
 
-<main class="container">
-
-    <div id="display-wrapper" class="top-20">
+<main id="insurance" class="container">
+    <label class="h1">Insurance</label>
+    <div>
+        Select a flight and an amount and insure a flight as the current active account.
     </div>
-    <div class="row top-20">
-        <label class="form">Flight</label> <input type="text" id="flight-number">
-        <button class="btn btn-primary" id="submit-oracle">Submit to Oracles</button>
+    <div>
+        This panel also allows passengers (the active account) to withdraw any balance they have.
     </div>
+    <div>
+        Each registered flight will be added to list in the Insurance panel for passengers to insure available flights.
+    </div>
+    <table>
+        <tr>
+            <td><label class="form">Select Flight:</label></td>
+            <td><select id="registered-flight-select" title="select available flight"></select></td>
+        </tr>
+        <tr>
+            <td><label class="form">Insurance amount</label></td>
+            <td><input type="text" id="insurance-amount"></td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <button class="btn btn-primary" id="btn-purchase-insurance">Purchase Insurance</button>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <button class="btn btn-primary" id="btn-withdraw-funds">Withdraw Funds</button>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <button class="btn btn-primary" id="submit-oracle">Fetch Flight Status</button>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div id="insurance-messages" class="top-20"></div>
 </main>
+
+<!--<main class="container">-->
+
+<!--    <div id="display-wrapper" class="top-20">-->
+<!--    </div>-->
+<!--    <div class="row top-20">-->
+<!--        <label class="form">Flight</label> <input type="text" id="flight-number">-->
+<!--        <button class="btn btn-primary" id="submit-oracle">Submit to Oracles</button>-->
+<!--    </div>-->
+<!--</main>-->
 
 </body>
 

@@ -19,6 +19,8 @@ export default class Contract {
     this.availableAccounts = [];
     this.airlines = {};
     this.passengers = [];
+    this.flightsRegistered = {};
+    this.flights = [];
   }
 
   initialize(callback) {
@@ -38,7 +40,6 @@ export default class Contract {
       this.airlines['KLM'] = accts[5];
       this.airlines['EnterAir'] = accts[6];
 
-      this.flightsRegistered = {};
       this.flights = [
         'LAI-ABE',
         'DHA-LCY',
@@ -117,6 +118,17 @@ export default class Contract {
     this.flightsRegistered[flightCode] = [flightCode, airline, timestamp];
 
     return [flightCode, airline, timestamp];
+  }
+
+  insureFlight(airlineAddress, flightCode, timestamp, value) {
+    return this.flightSuretyApp.methods
+      .insureFlight(airlineAddress, flightCode, timestamp)
+      .send({
+        from: this.activeAccount,
+        value: this.web3.utils.toWei(String(value), 'ether'),
+        gas: this.networkConfig.gas,
+        gasPrice: this.networkConfig.gasPrice,
+      });
   }
 
   fetchFlightStatus(flight, callback) {

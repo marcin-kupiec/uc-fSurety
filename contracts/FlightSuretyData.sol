@@ -10,6 +10,7 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
     uint256 public constant MINIMUM_FUNDS = 1 ether;
+    uint256 public constant INSURANCE_PRICE_LIMIT = 1 ether;
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
@@ -38,6 +39,16 @@ contract FlightSuretyData {
 
     mapping(bytes32 => Flight) private flights;
 
+    // passengers info
+    struct Passenger {
+        address wallet;
+        mapping(bytes32 => uint256) boughtFlight;
+        uint256 credit;
+    }
+
+    mapping(address => Passenger) private passengers;
+    address[] public passengerAddresses;
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -52,6 +63,7 @@ contract FlightSuretyData {
         contractOwner = msg.sender;
         airlinesCount = 0;
         authorizedContracts[msg.sender] = 1;
+        passengerAddresses = new address[](0);
 
         // First airline is registered when contract is deployed.
         airlines[msg.sender] = Airline({
@@ -146,6 +158,23 @@ contract FlightSuretyData {
         return airlines[airline].isRegistered;
     }
 
+    function isPassengerInsured(bytes32 flightKey, address passenger) public view returns (bool)
+    {
+        return passengers[passenger].boughtFlight[flightKey] > 0;
+    }
+
+    function passengerAlreadyExists(address passenger) internal view returns (bool found)
+    {
+        found = false;
+        for (uint256 i = 0; i < passengerAddresses.length; i++) {
+            if (passengerAddresses[i] == passenger) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -226,37 +255,73 @@ contract FlightSuretyData {
      * @dev Buy insurance for a flight
     *
     */
-    function buy
-    (
-    )
-    external
-    payable
+    function buy(bytes32 flightKey, address passenger, uint price) external payable
+    requireIsOperational
+    requireIsCallerAuthorized
     {
+        require(price > 0, "Flight insurance price needs to be > 0");
+        require(isFlightRegistered(flightKey), "Flight does not exist, or is not registered");
+        require(!isPassengerInsured(flightKey, passenger), "Passenger can't buy insurance for the same flight twice");
 
+        if (passengerAlreadyExists(passenger)) {
+            passengers[passenger].boughtFlight[flightKey] = price;
+        } else {
+            passengerAddresses.push(passenger);
+
+            passengers[passenger] = Passenger({
+            wallet : passenger,
+            credit : 0
+            });
+            passengers[passenger].boughtFlight[flightKey] = price;
+        }
+
+        if (price > INSURANCE_PRICE_LIMIT) {
+            passenger.transfer(price.sub(INSURANCE_PRICE_LIMIT));
+        }
     }
 
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees
-    (
-    )
-    external
-    pure
+    function creditInsurees(bytes32 flightKey, uint multiplier) external
+    requireIsOperational
+    requireIsCallerAuthorized
     {
+        for (uint256 i = 0; i < passengerAddresses.length; i++) {
+            if (passengers[passengerAddresses[i]].boughtFlight[flightKey] != 0) {
+                uint256 savedCredit = passengers[passengerAddresses[i]].credit;
+                uint256 payedPrice = passengers[passengerAddresses[i]].boughtFlight[flightKey];
+                uint256 newCredit = multiplier.mul(payedPrice);
+
+                passengers[passengerAddresses[i]].boughtFlight[flightKey] = 0;
+                passengers[passengerAddresses[i]].credit = savedCredit.add(newCredit);
+            }
+        }
     }
 
+    function getPassengerCreditBalance(address passenger) public view
+    requireIsOperational
+    requireIsCallerAuthorized
+    returns (uint256 balance)
+    {
+        return passengers[passenger].credit;
+    }
 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay
-    (
-    )
-    external
-    pure
+    function pay(address passenger) external payable
+    requireIsOperational
+    requireIsCallerAuthorized
     {
+        // checks
+        require(passengers[passenger].credit > 0, "Passenger has no credit balance");
+        // effects
+        uint256 money = passengers[passenger].credit;
+        passengers[passenger].credit = 0;
+        // interaction
+        passenger.transfer(money);
     }
 
     /**

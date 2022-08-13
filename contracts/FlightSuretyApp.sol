@@ -168,40 +168,51 @@ contract FlightSuretyApp {
         return flightSuretyData.isFlightRegistered(key);
     }
 
+    function insureFlight(address airline, string memory code, uint256 timestamp) public payable
+    {
+        bytes32 flightKey = getFlightKey(airline, code, timestamp);
+        flightSuretyData.buy(flightKey, msg.sender, msg.value);
+    }
+
+    function isPassengerInsured(address airline, string memory flight, uint256 timestamp) public view returns (bool)
+    {
+        bytes32 key = getFlightKey(airline, flight, timestamp);
+        return flightSuretyData.isPassengerInsured(key, msg.sender);
+    }
+
+    function withdrawCredits() public
+    requireIsOperational
+    {
+        flightSuretyData.pay(msg.sender);
+    }
+
+    function getPassengerCreditBalance() external view
+    returns (uint256 balance){
+        return flightSuretyData.getPassengerCreditBalance(msg.sender);
+    }
+
     /**
      * @dev Called after oracle has updated flight status
     *
     */
-    function processFlightStatus
-    (
-        address airline,
-        string memory flight,
-        uint256 timestamp,
-        uint8 statusCode
-    )
-    internal
-    pure
+    function processFlightStatus(address airline, string memory code, uint256 timestamp, uint8 statusCode) internal
+    requireIsOperational
     {
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            bytes32 key = getFlightKey(airline, code, timestamp);
+            // credit the account of each of the recipients
+            flightSuretyData.creditInsurees(key, premiumMultiplier);
+        }
     }
 
-
     // Generate a request for oracles to fetch flight information
-    function fetchFlightStatus
-    (
-        address airline,
-        string flight,
-        uint256 timestamp
-    )
-    external
+    function fetchFlightStatus(address airline, string flight, uint256 timestamp) external
     {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
-        oracleResponses[key] = ResponseInfo({
-        requester : msg.sender,
-        isOpen : true
-        });
+        oracleResponses[key] = ResponseInfo({requester : msg.sender, isOpen : true});
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
@@ -216,7 +227,7 @@ contract FlightSuretyApp {
     uint256 public constant REGISTRATION_FEE = 1 ether;
 
     // Number of oracles that must respond for valid status
-    uint256 private constant MIN_RESPONSES = 3;
+    uint256 private constant MIN_RESPONSES = 2;
 
 
     struct Oracle {
@@ -252,11 +263,7 @@ contract FlightSuretyApp {
 
 
     // Register an oracle with the contract
-    function registerOracle
-    (
-    )
-    external
-    payable
+    function registerOracle() external payable
     {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
@@ -269,33 +276,18 @@ contract FlightSuretyApp {
         });
     }
 
-    function getMyIndexes
-    (
-    )
-    view
-    external
-    returns (uint8[3])
+    function getMyIndexes() view external returns (uint8[3])
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
         return oracles[msg.sender].indexes;
     }
 
-
-
-
     // Called by oracle when a response is available to an outstanding request
     // For the response to be accepted, there must be a pending request that is open
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
-    function submitOracleResponse
-    (
-        uint8 index,
-        address airline,
-        string flight,
-        uint256 timestamp,
-        uint8 statusCode
-    )
+    function submitOracleResponse(uint8 index, address airline, string flight, uint256 timestamp, uint8 statusCode)
     external
     {
         require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
@@ -318,27 +310,13 @@ contract FlightSuretyApp {
         }
     }
 
-
-    function getFlightKey
-    (
-        address airline,
-        string flight,
-        uint256 timestamp
-    )
-    pure
-    internal
-    returns (bytes32)
+    function getFlightKey(address airline, string flight, uint256 timestamp) pure internal returns (bytes32)
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
     // Returns array of three non-duplicating integers from 0-9
-    function generateIndexes
-    (
-        address account
-    )
-    internal
-    returns (uint8[3])
+    function generateIndexes(address account) internal returns (uint8[3])
     {
         uint8[3] memory indexes;
         indexes[0] = getRandomIndex(account);
@@ -357,12 +335,7 @@ contract FlightSuretyApp {
     }
 
     // Returns array of three non-duplicating integers from 0-9
-    function getRandomIndex
-    (
-        address account
-    )
-    internal
-    returns (uint8)
+    function getRandomIndex(address account) internal returns (uint8)
     {
         uint8 maxValue = 10;
 
@@ -378,5 +351,4 @@ contract FlightSuretyApp {
     }
 
     // endregion
-
 }   

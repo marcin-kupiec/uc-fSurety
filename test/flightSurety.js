@@ -6,6 +6,9 @@ contract('Flight Surety Tests', async (accounts) => {
 
   let config;
 
+  let flightTimestamp = Math.floor(Date.now() / 1000);
+  let flightCode = 'CODE1';
+
   before('setup contract', async () => {
     config = await Test.Config(accounts);
     await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
@@ -118,9 +121,6 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(flight) can register a flight using registerFlight()', async () => {
-    let flightTimestamp = Math.floor(Date.now() / 1000);
-    let flightCode = 'CODE1';
-
     await config.flightSuretyApp.registerFlight(flightCode, flightTimestamp, { from: config.firstAirline });
 
     let isRegistered = await config.flightSuretyApp.isFlightRegistered.call(flightCode, flightTimestamp, config.firstAirline);
@@ -128,9 +128,6 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(flight) cannot register same flight twice', async () => {
-    let flightTimestamp = Math.floor(Date.now() / 1000);
-    let flightCode = 'CODE1';
-
     let reverted = false;
     try {
       await config.flightSuretyApp.registerFlight(flightCode, flightTimestamp, { from: config.firstAirline });
@@ -141,5 +138,113 @@ contract('Flight Surety Tests', async (accounts) => {
     let isRegistered = await config.flightSuretyApp.isFlightRegistered.call(flightCode, flightTimestamp, config.firstAirline);
     assert.equal(isRegistered, true, 'Flight should be registered');
     assert.equal(reverted, true);
+  });
+
+  it('(passenger) cannot insure flight for 0 money', async () => {
+    let reverted = false;
+    try {
+      await config.flightSuretyApp.insureFlight(
+        config.firstAirline,
+        flightCode,
+        flightTimestamp,
+        { from: config.firstPassenger, value: 0 },
+      );
+    } catch (err) {
+      reverted = true;
+    }
+    assert.equal(reverted, true, 'Should revert transaction');
+
+    const insuredPassenger = await config.flightSuretyApp.isPassengerInsured.call(
+      config.firstAirline,
+      flightCode,
+      flightTimestamp,
+      { from: config.firstPassenger },
+    );
+    assert.equal(insuredPassenger, false, 'Passenger should not be insured.');
+  });
+
+  it('(passenger) may pay up to 1 ether for purchasing flight insurance.', async () => {
+    const price = await config.flightSuretyData.INSURANCE_PRICE_LIMIT.call();
+
+    await config.flightSuretyApp.insureFlight(
+      config.firstAirline,
+      flightCode,
+      flightTimestamp,
+      { from: config.firstPassenger, value: price },
+    );
+
+    const insuredPassenger = await config.flightSuretyApp.isPassengerInsured.call(
+      config.firstAirline,
+      flightCode,
+      flightTimestamp,
+      { from: config.firstPassenger },
+    );
+    assert.equal(insuredPassenger, true, 'Passenger should be insured.');
+  });
+
+  it('(passenger) cannot insure same flight twice', async () => {
+    const price = await config.flightSuretyData.INSURANCE_PRICE_LIMIT.call();
+    let reverted = false;
+
+    try {
+      await config.flightSuretyApp.insureFlight(
+        config.firstAirline,
+        flightCode,
+        flightTimestamp,
+        { from: config.firstPassenger, value: price },
+      );
+    } catch (err) {
+      reverted = true;
+    }
+    assert.equal(reverted, true, 'Should revert transaction');
+  });
+
+  it('(passenger) cannot withdraw if there is no credit', async () => {
+    let errorZeroBalance = false;
+    try {
+      await config.flightSuretyApp.withdrawCredits({ from: config.firstPassenger });
+    } catch (e) {
+      errorZeroBalance = true;
+    }
+    assert.equal(errorZeroBalance, true, "Should not be able to withdraw money with no credit balance");
+  });
+
+  it('(passenger) can withdraw credits if flight was late', async () => {
+    let firstPassengerBalance = await config.flightSuretyApp.getPassengerCreditBalance.call({ from: config.firstPassenger });
+    assert.equal(firstPassengerBalance, 0, "passenger 1 should have no credit");
+
+    // simulate late flight
+
+    // register oracle
+    const fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
+    const oracleAddress = accounts[accounts.length - 1];
+
+    for (let i = 1; i < 40; i++) {
+      await config.flightSuretyApp.registerOracle({ from: accounts[accounts.length - i], value: fee });
+    }
+
+    // trigger flight status submit
+    await config.flightSuretyApp.fetchFlightStatus(config.firstAirline, flightCode, flightTimestamp, { from: config.owner });
+
+    for (let i = 1; i < 40; i++) {
+      let oracleIndexes = await config.flightSuretyApp.getMyIndexes.call({ from: accounts[accounts.length - i] });
+      for (let i = 0; i < oracleIndexes.length; i++) {
+        try {
+          await config.flightSuretyApp.submitOracleResponse(oracleIndexes[i], config.firstAirline, flightCode, flightTimestamp, config.STATUS_CODE_LATE_AIRLINE, { from: accounts[accounts.length - i] });
+          console.log('Submit oracle response done ', i, oracleIndexes[i].toNumber(), flightCode, flightTimestamp);
+        } catch (err) {
+        }
+      }
+    }
+
+    // end of simulate late flight
+
+    firstPassengerBalance = await config.flightSuretyApp.getPassengerCreditBalance.call({ from: config.firstPassenger });
+    assert.equal(firstPassengerBalance, 2000000000000000000, `passenger 1 should have 2 ethers not ${firstPassengerBalance}`);
+
+    await config.flightSuretyApp.withdrawCredits({ from: config.firstPassenger });
+
+    firstPassengerBalance = await config.flightSuretyApp.getPassengerCreditBalance.call({ from: config.firstPassenger });
+    assert.equal(firstPassengerBalance, 0, `passenger 1 should have no credit after withdrawing, has ${firstPassengerBalance}`);
   });
 });

@@ -22,6 +22,7 @@ const Config = async function (accounts) {
   let owner = accounts[0];
   let firstAirline = accounts[0];
   let firstAirlineName = 'Fast Airlines';
+  let firstPassenger = accounts[8];
 
   let flightSuretyData = await FlightSuretyData.new(firstAirlineName);
   let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address);
@@ -29,10 +30,17 @@ const Config = async function (accounts) {
   return {
     owner: owner,
     firstAirline: firstAirline,
+    firstPassenger: firstPassenger,
     weiMultiple: (new BigNumber(10)).pow(18),
     testAddresses: testAddresses,
     flightSuretyData: flightSuretyData,
     flightSuretyApp: flightSuretyApp,
+    STATUS_CODE_UNKNOWN: new BigNumber(0),
+    STATUS_CODE_ON_TIME: new BigNumber(10),
+    STATUS_CODE_LATE_AIRLINE: new BigNumber(20),
+    STATUS_CODE_LATE_WEATHER: new BigNumber(30),
+    STATUS_CODE_LATE_TECHNICAL: new BigNumber(40),
+    STATUS_CODE_LATE_OTHER: new BigNumber(50),
   }
 }
 
