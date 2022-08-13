@@ -217,7 +217,6 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // register oracle
     const fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
-    const oracleAddress = accounts[accounts.length - 1];
 
     for (let i = 1; i < 40; i++) {
       await config.flightSuretyApp.registerOracle({ from: accounts[accounts.length - i], value: fee });

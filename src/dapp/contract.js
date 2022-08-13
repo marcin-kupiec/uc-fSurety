@@ -9,8 +9,10 @@ export default class Contract {
     let config = Config[network];
     this.networkConfig = config;
     this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+    this.web3Socket = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
     this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
     this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+    this.flightSuretyAppWithSockets = new this.web3Socket.eth.Contract(FlightSuretyApp.abi, config.appAddress);
     this.appAddress = config.appAddress;
 
     this.initialize(callback);
@@ -21,6 +23,7 @@ export default class Contract {
     this.passengers = [];
     this.flightsRegistered = {};
     this.flights = [];
+    this.events = [];
   }
 
   initialize(callback) {
@@ -57,6 +60,21 @@ export default class Contract {
         'CRK-CPT',
         'HKG-BER',
       ];
+
+
+      this.flightSuretyAppWithSockets.events.FlightStatusInfo({
+        fromBlock: 'latest',
+      }, (error, event) => {
+        if (error) {
+          console.log(error);
+          return;
+        }
+
+        const { airline, flight, timestamp, status } = event.returnValues;
+
+        console.log(`Received ${event.event} event`, airline, flight, timestamp, status);
+        this.events.push({ name: 'FlightStatusInfo', body: { airline, flight, timestamp, status } })
+      });
 
       this.authorizeAppToData()
         .then(() => callback())
@@ -131,17 +149,13 @@ export default class Contract {
       });
   }
 
-  fetchFlightStatus(flight, callback) {
-    let self = this;
-    let payload = {
-      airline: self.airlines[0],
-      flight: flight,
-      timestamp: Math.floor(Date.now() / 1000),
-    }
-    self.flightSuretyApp.methods
-      .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-      .send({ from: self.owner }, (error, result) => {
-        callback(error, payload);
-      });
+  fetchFlightStatus(flightCode, airlineAddress, timestamp) {
+    return this.flightSuretyApp.methods
+      .fetchFlightStatus(airlineAddress, flightCode, timestamp)
+      .send({ from: this.owner });
+  }
+
+  getEvents() {
+    return this.events;
   }
 }

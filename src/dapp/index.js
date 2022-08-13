@@ -11,6 +11,20 @@ import './flightsurety.css';
 
     // initialize tabs
 
+    setInterval(() => {
+      const events = contract.getEvents();
+      clearOraclesDisplay();
+
+      events.forEach(({ name, body }) => {
+        const { airline, flight, timestamp, status } = body;
+        display('oracles-messages', '', '', [{
+          label: 'New event ',
+          value: `Event: ${name} - airline: ${airline} flight ${flight} timestamp ${timestamp} status ${status}`,
+        }]);
+      })
+
+    }, 1000);
+
     try {
       result = await contract.isOperational();
 
@@ -194,16 +208,27 @@ import './flightsurety.css';
     })
 
     // User-submitted transaction
-    DOM.elid('submit-oracle').addEventListener('click', () => {
-      let flight = DOM.elid('flight-number').value;
-      // Write transaction
-      contract.fetchFlightStatus(flight, (error, result) => {
-        display(null, 'Oracles', 'Trigger oracles', [{
-          label: 'Fetch Flight Status',
-          error: error,
-          value: result.flight + ' ' + result.timestamp,
-        }]);
-      });
+    DOM.elid('submit-oracle').addEventListener('click', async () => {
+      let flight = DOM.elid('registered-flight-select').value;
+
+      let res = flight.split(',');
+      let flightCode = res[0];
+      let airlineAddress = res[1];
+      let timestamp = res[2];
+
+      let err;
+      try {
+        await contract.fetchFlightStatus(flightCode, airlineAddress, timestamp);
+      } catch (error) {
+        err = error;
+        console.log(`submitOracle flight ${flight} error: `, error);
+      }
+
+      display('insurance-messages', 'Oracles', 'Trigger oracles', [{
+        label: 'Fetch Flight Status',
+        error: err,
+        value: flightCode + ' ' + timestamp,
+      }]);
     })
   });
 
@@ -223,4 +248,9 @@ function display(container, title, description, results) {
     section.appendChild(row);
   })
   displayDiv.append(section);
+}
+
+function clearOraclesDisplay() {
+  DOM.elid('oracles-messages').remove();
+  DOM.elid('oracles').append(DOM.div({ className: 'top-20', id: 'oracles-messages' }));
 }
