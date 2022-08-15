@@ -14,6 +14,14 @@ let STATUS_CODE_LATE_AIRLINE = 20;
 let STATUS_CODE_LATE_WEATHER = 30;
 let STATUS_CODE_LATE_TECHNICAL = 40;
 let STATUS_CODE_LATE_OTHER = 50;
+let STATUS_CODES = [
+  STATUS_CODE_UNKNOWN,
+  STATUS_CODE_ON_TIME,
+  STATUS_CODE_LATE_AIRLINE,
+  STATUS_CODE_LATE_WEATHER,
+  STATUS_CODE_LATE_TECHNICAL,
+  STATUS_CODE_LATE_OTHER,
+];
 
 const TEST_ORACLES_COUNT = 20;
 let currentStatus = STATUS_CODE_ON_TIME;
@@ -41,6 +49,7 @@ flightSuretyApp.events.OracleRequest({
 
   const { index, airline, flight, timestamp } = event.returnValues;
 
+  console.log(`OracleRequest: `, index, airline, flight, timestamp);
   console.log(`Triggered index: ${index}`);
   for (let i = 0; i < Object.entries(oracles).length; i++) {
     let oracleAddress = Object.entries(oracles)[i][0];
@@ -50,10 +59,10 @@ flightSuretyApp.events.OracleRequest({
       continue;
     }
 
-    console.log(`Oracle: ${oracleAddress} triggered. Indexes: ${indexes}.`);
-
+    let status = STATUS_CODES[getRandomNumber(0, STATUS_CODES.length - 1)];
+    console.log(`Oracle: ${oracleAddress} triggered with status ${status}. Indexes: ${indexes}.`);
     await flightSuretyApp.methods
-      .submitOracleResponse(index, airline, flight, timestamp, currentStatus)
+      .submitOracleResponse(index, airline, flight, timestamp, status)
       .send({
         from: oracleAddress,
         gas: 500000,
@@ -121,6 +130,10 @@ async function initOracles() {
 
     oracles[accounts[i]] = await flightSuretyApp.methods.getMyIndexes().call({ from: accounts[i] });
   }
+}
+
+function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min) + min);
 }
 
 export default app;

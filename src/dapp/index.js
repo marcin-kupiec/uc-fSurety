@@ -15,10 +15,10 @@ import './flightsurety.css';
       const events = contract.getEvents();
       clearOraclesDisplay();
 
-      events.forEach(({ name, body }) => {
+      events.forEach(({ name, eventTimestamp, body }) => {
         const { airline, flight, timestamp, status } = body;
         display('oracles-messages', '', '', [{
-          label: 'New event ',
+          label: `${eventTimestamp}`,
           value: `Event: ${name} - airline: ${airline} flight ${flight} timestamp ${timestamp} status ${status}`,
         }]);
       })
@@ -95,12 +95,11 @@ import './flightsurety.css';
         console.log('isAirlineFunded error: ', err);
       }
 
-      // contract.getPassengerCreditBalance((error, result) => {
-      //   if (error) {
-      //     console.log('getPassengerCreditBalance error: ' + error);
-      //   }
-      //   DOM.elid('acc-credit').innerText = result;
-      // });
+      try {
+        DOM.elid('acc-credit').innerText = await contract.getCreditBalance();
+      } catch (err) {
+        console.log('getCreditBalance error: ', err);
+      }
 
       try {
         DOM.elid('acc-balance').innerText = await contract.web3.eth.getBalance(contract.activeAccount);
@@ -203,8 +202,27 @@ import './flightsurety.css';
       display('insurance-messages', '', '', [{
         label: 'Flight insurance',
         error: err,
-        value: `Bought flight insurance flightCode ${flightCode} airlineName ${contract.getAirlineNameByAccount(airlineAddress)} airlineAddress ${airlineAddress} timestamp ${timestamp} insuranceAmount ${insuranceAmount}`,
+        value: `Bought flight insurance flightCode ${flightCode} airlineName ${contract.getAirlineNameByAccount(airlineAddress)} airlineAddress ${airlineAddress} timestamp ${timestamp} insuranceAmount ${insuranceAmount} by passenger ${contract.activeAccount}`,
       }]);
+    })
+
+    DOM.elid('btn-withdraw-funds').addEventListener('click', async () => {
+
+      let err;
+      try {
+        await contract.withdrawCredits();
+      } catch (error) {
+        err = error;
+        console.log(`withdrawCredits address ${contract.activeAccount} error: `, error);
+      }
+
+      display('insurance-messages', '', '', [{
+        label: 'Withdraw credits',
+        error: err,
+        value: `Credits withdrawn account address ${contract.activeAccount}`,
+      }]);
+
+      await refreshAccountInfo();
     })
 
     // User-submitted transaction
@@ -224,7 +242,7 @@ import './flightsurety.css';
         console.log(`submitOracle flight ${flight} error: `, error);
       }
 
-      display('insurance-messages', 'Oracles', 'Trigger oracles', [{
+      display('insurance-messages', '', '', [{
         label: 'Fetch Flight Status',
         error: err,
         value: flightCode + ' ' + timestamp,

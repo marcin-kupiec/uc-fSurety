@@ -186,9 +186,9 @@ contract FlightSuretyApp {
         flightSuretyData.pay(msg.sender);
     }
 
-    function getPassengerCreditBalance() external view
+    function getCreditBalance() external view
     returns (uint256 balance){
-        return flightSuretyData.getPassengerCreditBalance(msg.sender);
+        return flightSuretyData.getCreditBalance(msg.sender);
     }
 
     /**

@@ -299,7 +299,7 @@ contract FlightSuretyData {
         }
     }
 
-    function getPassengerCreditBalance(address passenger) public view
+    function getCreditBalance(address passenger) public view
     requireIsOperational
     requireIsCallerAuthorized
     returns (uint256 balance)

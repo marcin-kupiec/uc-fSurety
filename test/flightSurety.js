@@ -210,7 +210,7 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(passenger) can withdraw credits if flight was late', async () => {
-    let firstPassengerBalance = await config.flightSuretyApp.getPassengerCreditBalance.call({ from: config.firstPassenger });
+    let firstPassengerBalance = await config.flightSuretyApp.getCreditBalance.call({ from: config.firstPassenger });
     assert.equal(firstPassengerBalance, 0, "passenger 1 should have no credit");
 
     // simulate late flight
@@ -238,12 +238,12 @@ contract('Flight Surety Tests', async (accounts) => {
 
     // end of simulate late flight
 
-    firstPassengerBalance = await config.flightSuretyApp.getPassengerCreditBalance.call({ from: config.firstPassenger });
+    firstPassengerBalance = await config.flightSuretyApp.getCreditBalance.call({ from: config.firstPassenger });
     assert.equal(firstPassengerBalance, 2000000000000000000, `passenger 1 should have 2 ethers not ${firstPassengerBalance}`);
 
     await config.flightSuretyApp.withdrawCredits({ from: config.firstPassenger });
 
-    firstPassengerBalance = await config.flightSuretyApp.getPassengerCreditBalance.call({ from: config.firstPassenger });
+    firstPassengerBalance = await config.flightSuretyApp.getCreditBalance.call({ from: config.firstPassenger });
     assert.equal(firstPassengerBalance, 0, `passenger 1 should have no credit after withdrawing, has ${firstPassengerBalance}`);
   });
 });

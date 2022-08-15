@@ -11,6 +11,9 @@ Node v10.24.1
 OpenZeppelin-solidity: ^1.10.0
 ```
 
+Test (passenger) can withdraw credits if flight was late depends on oracle responding with proper index, so sometimes it
+fails due to randomness. Retry test couple of times if it fails.
+
 ## Install
 
 This repository contains Smart Contract code in Solidity (using Truffle), tests (also using Truffle), dApp scaffolding (

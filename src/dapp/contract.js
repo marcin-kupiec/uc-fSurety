@@ -73,7 +73,11 @@ export default class Contract {
         const { airline, flight, timestamp, status } = event.returnValues;
 
         console.log(`Received ${event.event} event`, airline, flight, timestamp, status);
-        this.events.push({ name: 'FlightStatusInfo', body: { airline, flight, timestamp, status } })
+        this.events.push({
+          name: 'FlightStatusInfo',
+          eventTimestamp: new Date().toISOString(),
+          body: { airline, flight, timestamp, status },
+        })
       });
 
       this.authorizeAppToData()
@@ -147,6 +151,14 @@ export default class Contract {
         gas: this.networkConfig.gas,
         gasPrice: this.networkConfig.gasPrice,
       });
+  }
+
+  withdrawCredits() {
+    return this.flightSuretyApp.methods.withdrawCredits().send({ from: this.activeAccount });
+  }
+
+  getCreditBalance() {
+    return this.flightSuretyApp.methods.getCreditBalance().call({ from: this.activeAccount });
   }
 
   fetchFlightStatus(flightCode, airlineAddress, timestamp) {
